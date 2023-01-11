@@ -1,0 +1,107 @@
+html, body{
+     font-family: Teko, Arial, Tahoma, sans-serif;
+     margin: 0;
+     padding: 0;
+}
+
+:root {
+  --background-base: #101010;
+  --base-color: #45C5bf;
+  --item-color: #ffC5bf;
+  --ip-color: #ffffbf;
+  --uptime-color: #00ffbf;
+}
+
+body{
+    background: var(--background-base);
+	font-family: Teko;
+	font-size: 40px;
+}
+
+.container {
+    padding: 0.1em;
+    font-size: 1em;
+    color: var(--base-color);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: baseline;
+}
+
+.headertit {
+	font-size: 1em;
+	float:left;
+	border-bottom: 0.1em solid;
+}
+
+#app_version {
+	margin-left: 0.5em;
+    font-size: 0.5em;
+}
+
+.leftpanel {
+	width: 80%;
+	display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: baseline;
+}
+
+.rightpanel {
+	width: 20%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-end;
+    justify-content: flex-start;
+    align-items: baseline;
+	margin-left: 0.5em;
+}
+
+.righttit {
+	color: var(--background-base);
+    background-color: var(--base-color);
+    width: -webkit-fill-available;
+    display: flex;
+    flex-direction: row;
+    align-content: space-around;
+    justify-content: center;
+    border-bottom: 0.1em double;
+}
+
+.titclear {
+    font-size: 0.5em;
+	width: -webkit-fill-available;
+}
+
+.titunderscor {
+    font-size: 0.5em;
+    width: -webkit-fill-available;
+    border-bottom: 0.1em solid;
+}
+
+.serverstable {
+    font-size: 0.5em;
+	width: 100%;
+}
+.serversbox {
+	width: 100%;
+	height: 5em;
+}
+.serverstit {
+	color: var(--background-base);
+    background-color: var(--base-color);
+}
+
+.name{
+	color : var(--item-color);
+}
+.ip{
+	color : var(--ip-color);
+}
+.uptime{
+	color : var(--uptime-color);
+	float: right;
+}

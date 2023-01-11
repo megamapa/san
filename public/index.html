@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SERVERS_ACCESS_NODE</title>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Teko">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<body>
+<div class=container>
+<div class=leftpanel><div class=headertit>://SERVERS_ACCESS_NODE</div><div id=app_version></div>
+
+
+</div>
+<div class=rightpanel>
+<div class=righttit>UNIT-786</div>
+<div class=titclear>SERVERS_LIST</div>
+<div class=serversbox>
+<table class=serverstable><tbody id=serverslist>
+<tr class=serverstit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>
+<tr><td class=name>gw-server (v1.0.0)</td><td class=ip>200.198.17.67:50910</td><td class=uptime>1d,15hs</td></tr>
+<tr><td class=name>tk-server (v1.0.0)</td><td class=ip>67.37.80.12:50911</td><td class=uptime>10h,15m</td></tr>
+<tr><td class=name>neo-server (v1.0.0)</td><td class=ip>67.37.80.12:50920</td><td class=uptime>1m</td></tr>
+</tbody></table></div>
+<div class=titunderscor>SERVERS_CONNECTIONS</div>
+
+
+
+
+
+
+</div>
+
+
+
+</div>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" integrity="sha512-iqRVtNB+t9O+epcgUTIPF+nklypcR23H1yR1NFM9kffn6/iBhZ9bTB6oKLaGMv8JE9UgjcwfBFg/eHC/VMws+g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript">
+	var socket = io.connect(window.location.host);
+	socket.on('servers_list', function (data) {
+		let str='<tr class=serverstit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>';
+		for (let x=0; x < data.length; x++) {
+			let obj = JSON.parse(data[x]);
+			str+='<tr><td class=name>'+obj.name+'('+obj.version+')</td><td class=ip>'+obj.ipport+'</td><td class=uptime>'+obj.uptime+'</td></tr>';
+		}
+		document.getElementById("serverslist").innerHTML = str;
+		//socket.emit('subscribe', {'username':'tegioz', 'rooms':['pruebas']});
+	});
+	socket.on('app_version', function (data) {
+		document.getElementById("app_version").innerHTML = data;
+	});
+	socket.on('version', function (data) {
+		console.log("newMessage: %s", JSON.stringify(data));
+	});
+</script>
+</body>
+</html>
