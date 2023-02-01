@@ -2,33 +2,43 @@
 <html>
 <head>
     <title>SERVERS_ACCESS_NODE</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yantramanav&display=swap">
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Teko">
     <link rel="stylesheet" type="text/css" href="style.css" />
 </head>
 <body>
 <div class=container>
-<div class=leftpanel><div class=headertit>://SERVERS_ACCESS_NODE</div><div id=app_version></div>
+	<div class=leftpanel>
+		<div class="headerline"> 
+			<div class=headertit>://SERVERS_ACCESS_NODE</div><div id=app_version></div>
+		</div>	
+	<div class="bodyline">
+		<div class="panel15">
+			<div class=titunderscor>DEVICES_TO_MONITOR</div>
+			
+		</div>
+		<div class="panel55"><ul id="panel-monitor"></ul></div>
+		<div class="panel15">
+			<div class=titunderscor>GPS_DATA</div>
+		</div>
+	</div>
 
+	</div>
 
-</div>
-<div class=rightpanel>
-<div class=righttit>UNIT-786</div>
-<div class=titclear>SERVERS_LIST</div>
-<div class=serversbox>
-<table class=serverstable><tbody id=serverslist>
-<tr class=serverstit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>
-<tr><td class=name>gw-server (v1.0.0)</td><td class=ip>200.198.17.67:50910</td><td class=uptime>1d,15hs</td></tr>
-<tr><td class=name>tk-server (v1.0.0)</td><td class=ip>67.37.80.12:50911</td><td class=uptime>10h,15m</td></tr>
-<tr><td class=name>neo-server (v1.0.0)</td><td class=ip>67.37.80.12:50920</td><td class=uptime>1m</td></tr>
-</tbody></table></div>
-<div class=titunderscor>SERVERS_CONNECTIONS</div>
-
-
-
-
-
-
-</div>
+	<div class=rightpanel>
+		<div class=righttit>UNIT-786</div>
+		<div class=titclear>SERVERS_LIST</div>
+		<div class=serversbox>
+			<table class=serverstable>
+				<tbody id=serverslist>
+				<tr class=serverstit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>
+				</tbody>
+			</table>
+		</div>
+		<div class=titunderscor>SERVERS_CONNECTIONS</div>
+	</div>
 
 
 
@@ -49,8 +59,8 @@
 	socket.on('app_version', function (data) {
 		document.getElementById("app_version").innerHTML = data;
 	});
-	socket.on('version', function (data) {
-		console.log("newMessage: %s", JSON.stringify(data));
+	socket.on('dev_monitor', function (data) {
+		document.getElementById("panel-monitor").insertAdjacentHTML("beforeend",data);
 	});
 </script>
 </body>

@@ -12,6 +12,7 @@ async function GetDate() {
 
 // Inicializa variaveis globais
 var Servers = [];
+var Devslog = [];
 
 // Read enviroment variables
 const dotenv = require('dotenv');
@@ -50,7 +51,7 @@ io.on('connection', (socket) =>{
 
 // Send servers status
 async function SendUpdate(){
-	// Verifica se o servidor nao mandou nada nos ultimos 2 minutos
+	// Pega data e hora atual e percorre a lista de servidores verificando qual foi o último envio
 	GetDate().then(dte => {
 		let x=0;
 		while (x < Servers.length) {
@@ -61,11 +62,11 @@ async function SendUpdate(){
 			if ((d1-d2) > 120000) { Servers.splice(x,1);} else {x++}
 		}
 		// Envia a lista atualizada
-		io.emit("servers_list",Servers);
+		io.emit("servers_list",Servers)
 	});
 }
 
-// Envia o status a cada 65S
+// Envia o status a cada 65s
 setInterval(function(){ SendUpdate(); }, 65000);
 
 /****************************************************************************************************/
@@ -73,10 +74,10 @@ setInterval(function(){ SendUpdate(); }, 65000);
 /****************************************************************************************************/
 // Create and open Redis connection
 const Redis = require('ioredis');
-const hub = new Redis({host:process.env.RD_host, port:process.env.RD_port, showFriendlyErrorStack: true });
+const hub = new Redis({host:process.env.RD_host, port:process.env.RD_port, showFriendlyErrorStack: true});
 
 // Subscribe
-hub.subscribe("san:server_update", (err, count) => {
+hub.subscribe("san:server_update","san:monitor_update", (err, count) => {
   if (err) {
      console.error("Failed to subscribe: %s", err.message);
   } 
@@ -85,22 +86,27 @@ hub.subscribe("san:server_update", (err, count) => {
 // Waiting messages
 hub.on("message", (channel, message) => {
   switch (channel) {
-	case 'san:server_update' : 
+	case 'san:server_update' :
+		// Converte para objeto
 		let obj = JSON.parse(message);
+		// Verifica se o servidor ja esta na lista
 		let x = 0;
 		while (x < Servers.length) {
 			srv = JSON.parse(Servers[x]);
 			if (obj.name==srv.name && obj.ipport==srv.ipport) { break; }
 			x++;
 		}
-		// Adciona a hora e atualiza a lista de servidores
+		// Adciona data e hora e atualiza a lista de servidores
 		GetDate().then(dte => {
 			Servers[x]=message.substring(0,message.length-1)+',"time":"'+dte+'"}';
 			// Se o servidor for novo envia imediatamente
 			if (x==Servers.length-1) {SendUpdate();}
 			});
 		break;
-	   
+
+	case 'san:monitor_update' :
+		io.emit("dev_monitor",message);
+		break;
 	  
   }
 	
