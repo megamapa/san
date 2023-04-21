@@ -51,7 +51,11 @@
 		let str='<tr class=serverstit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>';
 		for (let x=0; x < data.length; x++) {
 			let obj = JSON.parse(data[x]);
-			str+='<tr><td class=name>'+obj.name+'('+obj.version+')</td><td class=ip>'+obj.ipport+'</td><td class=uptime>'+obj.uptime+'</td></tr>';
+			let uptime='';
+			if (obj.uptime<1) {uptime='now'} else
+			 if (obj.uptime<60) {uptime=obj.uptime+' min'} else
+			  if (obj.uptime<3600) {uptime=Math.floor(obj.uptime/60)+' hrs'}
+			str+='<tr><td class=name>'+obj.name+'('+obj.version+')</td><td class=ip>'+obj.ipport+'</td><td class=uptime>'+uptime+'</td></tr>';
 		}
 		document.getElementById("serverslist").innerHTML = str;
 		//socket.emit('subscribe', {'username':'tegioz', 'rooms':['pruebas']});

@@ -10,15 +10,23 @@ async function GetDate() {
 	return new Date(new Date().getTime() - (offset*60*1000)).toISOString().replace(/T/,' ').replace(/\..+/, '');
 }
 
-// Inicializa variaveis globais
-var Servers = [];
-var Devslog = [];
+// Publish message to whatsapp
+async function PublishMsg(msg) {
+	pub.publish('msg:san_message','{"msg":"'+msg+'"}');
+}
 
-// Read enviroment variables
+// Inicializa variaveis globais
+var starttime=0, Servers = [];
+
+/****************************************************************************************************/
+/* Read enviroment variables																		*/
+/****************************************************************************************************/
 const dotenv = require('dotenv');
 dotenv.config();
 
-// Create express
+/****************************************************************************************************/
+/* Create and open express connection 																*/
+/****************************************************************************************************/
 const express = require('express')
 const app = express()
 const http = require('http').createServer(app)
@@ -59,27 +67,36 @@ async function SendUpdate(){
 			let d1 = Date.parse(dte);
 			let d2 = Date.parse(srv.time);
 			// Se nao recebeu nada nos ultimos 2 minutos tira ele da lista
-			if ((d1-d2) > 120000) { Servers.splice(x,1);} else {x++}
+			if ((d1-d2) > 120000) {
+				// Envia uma messagem
+				PublishMsg('Alert: '+srv.name+'('+srv.version+') is down.');
+				// Tira da lista de on-line
+				Servers.splice(x,1);
+			} else {x++}
 		}
 		// Envia a lista atualizada
-		io.emit("servers_list",Servers)
+		io.emit("servers_list", Servers);
 	});
 }
 
-// Envia o status a cada 65s
-setInterval(function(){ SendUpdate(); }, 65000);
+// Envia o status a cada 60s
+setInterval(function(){ SendUpdate(); }, 60000);
 
 /****************************************************************************************************/
-/* Redis        																					*/
+/* Create and open Redis connection 																*/
 /****************************************************************************************************/
-// Create and open Redis connection
 const Redis = require('ioredis');
-const hub = new Redis({host:process.env.RD_host, port:process.env.RD_port, showFriendlyErrorStack: true});
+const hub = new Redis({host:process.env.RD_host, port:process.env.RD_port, password:process.env.RD_pass});
+const pub = new Redis({host:process.env.RD_host, port:process.env.RD_port, password:process.env.RD_pass});
 
-// Subscribe
+// Updates server status as soon as it successfully connects
+hub.on('connect', function () { GetDate().then(dte => { console.log('\033[30m'+dte+': \033[32mHUB connected.\033[0;0m');
+														console.log('\033[30m'+dte+': \033[32mWaiting clients...\033[0;0m');}); });
+
+// Subscribe on chanels
 hub.subscribe("san:server_update","san:monitor_update", (err, count) => {
   if (err) {
-     console.error("Failed to subscribe: %s", err.message);
+	console.log('\033[30m'+dte+': \033[31mFailed to subscribe: '+ err.message +'\033[0m');
   } 
 });
 
@@ -112,13 +129,22 @@ hub.on("message", (channel, message) => {
 	
   
 });
+/****************************************************************************************************/
+/* Create and open MySQL connection																	*/
+/****************************************************************************************************/
+const mysql = require('mysql');
+const db = mysql.createPool({host:process.env.DB_host, database:process.env.DB_name, user:process.env.DB_user, password:process.env.DB_pass, connectionLimit:10});
 
+/****************************************************************************************************/
+/* 	Show parameters and waiting clients																*/
+/****************************************************************************************************/
 const OS = require('os');
 GetDate().then(dte => {
+	// Save start datetime
+	starttime = Date.parse(dte);
 	// Show parameters and waiting clients
-	console.log('\033[1;30m'+dte+': \033[0;31m================================');
-	console.log('\033[1;30m'+dte+': \033[0;31m' + 'APP : ' + process.title + ' ('+Version+')');
-	console.log('\033[1;30m'+dte+': \033[0;31m' + 'IP/Port : ' + process.env.SrvIP + ':' + process.env.SrvPort);
-	console.log('\033[1;30m'+dte+': \033[0;31m' + 'CPUs: '+ OS.cpus().length);
-	console.log('\033[1;30m'+dte+': \033[0;31m================================');
-	console.log('\033[1;30m'+dte+': \033[0;31mWaiting clients...\033[0;0m');});
+	console.log('\033[30m'+dte+': \033[37m================================');
+	console.log('\033[30m'+dte+': \033[37m' + 'APP : ' + process.title + ' ('+Version+')');
+	console.log('\033[30m'+dte+': \033[37m' + 'IP/Port : ' + process.env.SrvIP + ':' + process.env.SrvPort);
+	console.log('\033[30m'+dte+': \033[37m' + 'CPUs: '+ OS.cpus().length);
+	console.log('\033[30m'+dte+': \033[37m================================');});
