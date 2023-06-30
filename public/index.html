@@ -17,6 +17,13 @@
 	<div class="bodyline">
 		<div class="panel15">
 			<div class=titunderscor>DEVICES_TO_MONITOR</div>
+			<div class=devicesbox>
+				<table class=devicestable>
+					<tbody id=deviceslist>
+					<tr class=devicestit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>
+					</tbody>
+				</table>
+			</div>
 			
 		</div>
 		<div class="panel55"><ul id="panel-monitor"></ul></div>
@@ -60,6 +67,16 @@
 		document.getElementById("serverslist").innerHTML = str;
 		//socket.emit('subscribe', {'username':'tegioz', 'rooms':['pruebas']});
 	});
+
+	socket.on('log_list', function (data) {
+		let str='<tr class=devicestit><th>ID</th><th>NAME</th></tr>';
+		for (let x=0; x < data.length; x++) {
+			let obj = JSON.parse(data[x]);
+			str+='<tr><td class=did>'+obj.did+'</td><td class=name>'+obj.name+'</td></tr>';
+		}
+		document.getElementById("deviceslist").innerHTML = str;
+	});
+
 	socket.on('app_version', function (data) {
 		document.getElementById("app_version").innerHTML = data;
 	});

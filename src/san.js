@@ -12,11 +12,11 @@ async function GetDate() {
 
 // Publish message to whatsapp
 async function PublishMsg(msg) {
-	pub.publish('msg:san_message','{"msg":"'+msg+'"}');
+	hub.publish('msg:san_message','{"msg":"'+msg+'"}');
 }
 
 // Inicializa variaveis globais
-var starttime=0, Servers = [];
+var Servers = [];
 
 /****************************************************************************************************/
 /* Read enviroment variables																		*/
@@ -31,7 +31,7 @@ const express = require('express')
 const app = express()
 const http = require('http').createServer(app)
 app.use(express.static('public'));
-http.listen(process.env.SrvPort || 3000);
+http.listen(process.env.SrvPort || 50000);
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + 'public/index.html');
@@ -40,11 +40,17 @@ app.get('/', (req, res) => {
 /****************************************************************************************************/
 /* Socket.io      																					*/
 /****************************************************************************************************/
-const io = require('socket.io')(http)
+const io = require('socket.io')(http, {
+	cors: {
+	  origin: '*',
+	}
+  });
 
 io.on('connection', (socket) =>{
 	// Envia a lista de servidores ativos
 	SendUpdate();
+	// Envia lista de devices na lista LOG
+	SendLogList();
 	// Envia versao do SAN
 	socket.emit('app_version', process.title + ' ('+Version+')');
 	
@@ -57,13 +63,28 @@ io.on('connection', (socket) =>{
     })
 });
 
+// Send log list
+async function SendLogList(){
+	const keys = await hub.scan(0, 'MATCH', 'log:*');
+	// Monta a lista atualizada
+	let logs=[];
+	let x=0;
+	while (x < keys[1].length) {
+		let key = await hub.get(keys[1][x]);
+		logs[x]='{"did":"'+keys[1][x].substring(4)+'","name":"'+key+'"}';
+		x++
+	}
+	// Envia a lista atualizada
+	if (x > 0) { io.emit("log_list", logs); }
+}
+
 // Send servers status
 async function SendUpdate(){
 	// Pega data e hora atual e percorre a lista de servidores verificando qual foi o último envio
 	GetDate().then(dte => {
 		let x=0;
 		while (x < Servers.length) {
-			srv = JSON.parse(Servers[x]);
+			let srv = JSON.parse(Servers[x]);
 			let d1 = Date.parse(dte);
 			let d2 = Date.parse(srv.time);
 			// Se nao recebeu nada nos ultimos 2 minutos tira ele da lista
@@ -90,18 +111,18 @@ const hub = new Redis({host:process.env.RD_host, port:process.env.RD_port, passw
 const pub = new Redis({host:process.env.RD_host, port:process.env.RD_port, password:process.env.RD_pass});
 
 // Updates server status as soon as it successfully connects
-hub.on('connect', function () { GetDate().then(dte => { console.log('\033[30m'+dte+': \033[32mHUB connected.\033[0;0m');
-														console.log('\033[30m'+dte+': \033[32mWaiting clients...\033[0;0m');}); });
+pub.on('connect', function () { GetDate().then(dte => { console.log('\033[30m'+dte+': \033[32mHUB connected.\033[0;0m');
+														console.log('\033[30m'+dte+': \033[32mWaiting clients...\033[0;0m');});});
 
 // Subscribe on chanels
-hub.subscribe("san:server_update","san:monitor_update", (err, count) => {
+pub.subscribe("san:server_update","san:monitor_update", (err, count) => {
   if (err) {
 	console.log('\033[30m'+dte+': \033[31mFailed to subscribe: '+ err.message +'\033[0m');
   } 
 });
 
 // Waiting messages
-hub.on("message", (channel, message) => {
+pub.on("message", (channel, message) => {
   switch (channel) {
 	case 'san:server_update' :
 		// Converte para objeto
@@ -132,16 +153,14 @@ hub.on("message", (channel, message) => {
 /****************************************************************************************************/
 /* Create and open MySQL connection																	*/
 /****************************************************************************************************/
-const mysql = require('mysql');
-const db = mysql.createPool({host:process.env.DB_host, database:process.env.DB_name, user:process.env.DB_user, password:process.env.DB_pass, connectionLimit:10});
+//const mysql = require('mysql');
+//const db = mysql.createPool({host:process.env.DB_host, database:process.env.DB_name, user:process.env.DB_user, password:process.env.DB_pass, connectionLimit:10});
 
 /****************************************************************************************************/
 /* 	Show parameters and waiting clients																*/
 /****************************************************************************************************/
 const OS = require('os');
 GetDate().then(dte => {
-	// Save start datetime
-	starttime = Date.parse(dte);
 	// Show parameters and waiting clients
 	console.log('\033[30m'+dte+': \033[37m================================');
 	console.log('\033[30m'+dte+': \033[37m' + 'APP : ' + process.title + ' ('+Version+')');

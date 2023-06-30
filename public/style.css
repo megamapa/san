@@ -172,6 +172,21 @@ body{
     border-bottom: 0.1em solid;
 }
 
+
+
+.devicestable {
+    font-size: 0.5em;
+	width: 100%;
+}
+.devicesbox {
+	width: 100%;
+	height: 5em;
+}
+.devicestit {
+	color: var(--background-base);
+    background-color: var(--base-color);
+}
+
 .serverstable {
     font-size: 0.5em;
 	width: 100%;
@@ -185,6 +200,9 @@ body{
     background-color: var(--base-color);
 }
 
+.did{
+	color : var(--item-color);
+}
 .name{
 	color : var(--item-color);
 }
