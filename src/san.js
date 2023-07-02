@@ -163,7 +163,7 @@ const OS = require('os');
 GetDate().then(dte => {
 	// Show parameters and waiting clients
 	console.log('\033[36m'+dte+': \033[37m================================');
-	console.log('\033[36m'+dte+': \033[37m' + 'APP : ' + process.title + ' ('+Version+')');
-	console.log('\033[36m'+dte+': \033[37m' + 'IP/Port : ' + process.env.SrvIP + ':' + process.env.SrvPort);
-	console.log('\033[36m'+dte+': \033[37m' + 'CPUs: '+ OS.cpus().length);
+	console.log('\033[36m'+dte+': \033[37mAPP : ' + process.title + ' ('+Version+')');
+	console.log('\033[36m'+dte+': \033[37mIP/Port : ' + process.env.SrvIP + ':' + process.env.SrvPort);
+	console.log('\033[36m'+dte+': \033[37mCPUs: '+ OS.cpus().length);
 	console.log('\033[36m'+dte+': \033[37m================================');});
