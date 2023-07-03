@@ -54,7 +54,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.min.js" integrity="sha512-iqRVtNB+t9O+epcgUTIPF+nklypcR23H1yR1NFM9kffn6/iBhZ9bTB6oKLaGMv8JE9UgjcwfBFg/eHC/VMws+g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript">
 	var socket = io.connect(window.location.host);
-	socket.on('servers_list', function (data) {
+
+	socket.on('app_version', function (data) {
+		document.getElementById("app_version").innerHTML = data;
+	});
+
+	socket.on('monitor_update', function (data) {
+		document.getElementById("panel-monitor").insertAdjacentHTML("beforeend",data);
+	});
+
+	socket.on('server_update', function (data) {
 		let str='<tr class=serverstit><th>NAME(VERSION)</th><th>IP:PORT</th><th>UP-TIME</th></tr>';
 		for (let x=0; x < data.length; x++) {
 			let obj = JSON.parse(data[x]);
@@ -65,7 +74,7 @@
 			str+='<tr><td class=name>'+obj.name+'('+obj.version+')</td><td class=ip>'+obj.ipport+'</td><td class=uptime>'+uptime+'</td></tr>';
 		}
 		document.getElementById("serverslist").innerHTML = str;
-		//socket.emit('subscribe', {'username':'tegioz', 'rooms':['pruebas']});
+		//socket.emit('subscribe', {'username':'xxxx', 'rooms':['xxxxx']});
 	});
 
 	socket.on('log_list', function (data) {
@@ -77,12 +86,6 @@
 		document.getElementById("deviceslist").innerHTML = str;
 	});
 
-	socket.on('app_version', function (data) {
-		document.getElementById("app_version").innerHTML = data;
-	});
-	socket.on('dev_monitor', function (data) {
-		document.getElementById("panel-monitor").insertAdjacentHTML("beforeend",data);
-	});
 </script>
 </body>
 </html>
