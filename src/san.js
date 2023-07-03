@@ -10,9 +10,9 @@ async function GetDate() {
 	return new Date(new Date().getTime() - (offset*60*1000)).toISOString().replace(/T/,' ').replace(/\..+/, '');
 }
 
-// Publish message to whatsapp
-async function PublishMsg(msg) {
-	hub.publish('msg:san_message','{"msg":"'+msg+'"}');
+// Publish message to adm whatsapp
+async function PublishMsg(number,msg) {
+	hub.publish('msg:adm_message','{"number":"'+number+'","msg":"'+msg+'"}');
 }
 
 // Inicializa variaveis globais
@@ -42,24 +42,20 @@ app.get('/', (req, res) => {
 /****************************************************************************************************/
 const io = require('socket.io')(http, {
 	cors: {
-	  origin: '*',
+	  origin: '*'
 	}
   });
 
 io.on('connection', (socket) =>{
+	// Envia versao do SAN
+	socket.emit('app_version', process.title + ' ('+Version+')');
 	// Envia a lista de servidores ativos
 	SendUpdate();
 	// Envia lista de devices na lista LOG
 	SendLogList();
-	// Envia versao do SAN
-	socket.emit('app_version', process.title + ' ('+Version+')');
 	
     socket.on('message', (msg)=>{
         socket.broadcast.emit('message', msg)
-    })
-
-    socket.on('typing', (data)=>{
-        socket.broadcast.emit('typing', data)
     })
 });
 
@@ -89,14 +85,14 @@ async function SendUpdate(){
 			let d2 = Date.parse(srv.time);
 			// Se nao recebeu nada nos ultimos 2 minutos tira ele da lista
 			if ((d1-d2) > 120000) {
-				// Envia uma messagem
-				PublishMsg('Alert: '+srv.name+'('+srv.version+') is down.');
+				// Envia uma messagem de alerta
+				PublishMsg(process.env.WA_adm, 'Alerta: '+srv.name+'('+srv.version+') fora do ar.');
 				// Tira da lista de on-line
 				Servers.splice(x,1);
 			} else {x++}
 		}
 		// Envia a lista atualizada
-		io.emit("servers_list", Servers);
+		io.emit("server_update", Servers);
 	});
 }
 
@@ -115,7 +111,7 @@ pub.on('connect', function () { GetDate().then(dte => { console.log('\033[36m'+d
 														console.log('\033[36m'+dte+': \033[32mWaiting clients...\033[0;0m');});});
 
 // Subscribe on chanels
-pub.subscribe("san:server_update","san:monitor_update", (err, count) => {
+pub.subscribe("san:server_update","san:monitor_update","san:msg_request", (err, count) => {
   if (err) {
 	console.log('\033[36m'+dte+': \033[31mFailed to subscribe: '+ err.message +'\033[0m');
   } 
@@ -123,32 +119,45 @@ pub.subscribe("san:server_update","san:monitor_update", (err, count) => {
 
 // Waiting messages
 pub.on("message", (channel, message) => {
-  switch (channel) {
-	case 'san:server_update' :
-		// Converte para objeto
-		let obj = JSON.parse(message);
-		// Verifica se o servidor ja esta na lista
-		let x = 0;
-		while (x < Servers.length) {
-			srv = JSON.parse(Servers[x]);
-			if (obj.name==srv.name && obj.ipport==srv.ipport) { break; }
-			x++;
-		}
-		// Adciona data e hora e atualiza a lista de servidores
-		GetDate().then(dte => {
-			Servers[x]=message.substring(0,message.length-1)+',"time":"'+dte+'"}';
-			// Se o servidor for novo envia imediatamente
-			if (x==Servers.length-1) {SendUpdate();}
+	// Converte para objeto
+	let obj = JSON.parse(message);
+	switch (channel) {
+		case 'san:server_update' :
+			// Verifica se o servidor ja esta na lista
+			let x = 0;
+			while (x < Servers.length) {
+				srv = JSON.parse(Servers[x]);
+				if (obj.name==srv.name && obj.ipport==srv.ipport) { break; }
+				x++;
+			}
+			// Adciona data e hora e atualiza a lista de servidores
+			GetDate().then(dte => {
+				Servers[x]=message.substring(0,message.length-1)+',"time":"'+dte+'"}';
+				// Se o servidor for novo envia imediatamente
+				if (x==Servers.length-1) {SendUpdate();}
 			});
-		break;
+			break;
 
-	case 'san:monitor_update' :
-		io.emit("dev_monitor",message);
-		break;
-	  
-  }
+		case 'san:monitor_update' :
+			io.emit("monitor_update",obj.msg);
+			break;
+		  
+		case 'san:msg_request' :
+			switch (obj.msg) {
+				case '#status' :
+					PublishMsg(obj.number,'-------------------------------------');
+					let x=0;
+					while (x < Servers.length) {
+						let srv = JSON.parse(Servers[x]);
+						PublishMsg(obj.number,srv.name.padEnd(14)+srv.ipport.padEnd(23)+'ON LINE');
+						x++;
+					}
+					PublishMsg(obj.number,'-------------------------------------');
+					break;
+			}
+			break;
+	}
 	
-  
 });
 /****************************************************************************************************/
 /* Create and open MySQL connection																	*/
